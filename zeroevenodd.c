@@ -26,15 +26,21 @@ int main(int argc, char** argv)
 	printf("thread: [%ld] function: [%s] line: [%d] arguments passed: [%s] [%s]\n", pthread_self(), __func__, __LINE__, argv[0], argv[1]);
 #endif
 	int freq = atoi(argv[1]);
-#ifdef _ENABLE_LOGS_INFO_
-	printf("thread: [%ld] function: [%s] line: [%d] print upto number: [%d]\n", pthread_self(), __func__, __LINE__, freq);
+
+	if(freq < 1)
+	{
+#ifdef _ENABLE_LOGS_ERR_
+		printf("thread: [%ld] function: [%s] line: [%d] count number  should be 1 or more\n", pthread_self(), __func__, __LINE__);
 #endif
+		return -1;
+	}
+
 	ZeroEvenOdd* zeoobj = zeroEvenOddCreate(freq);
 
 	pthread_t pthread[3];
 
 #ifdef _ENABLE_LOGS_INFO_
-	printf("thread: [%ld] function: [%s] line: [%d] threads started\n", pthread_self(), __func__, __LINE__);
+	printf("thread: [%ld] function: [%s] line: [%d] starting threads\n", pthread_self(), __func__, __LINE__);
 #endif
 
 	int pret1, pret2, pret3;
@@ -95,51 +101,27 @@ void zero(ZeroEvenOdd* obj) {
 	while(1)
 	{
 		pthread_mutex_lock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex lock\n", pthread_self(), __func__, __LINE__);
-#endif
 		while(flag_zero == 0 && (flag_odd == 1 || flag_even == 1))
 		{
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] before cond_zero wait\n", pthread_self(), __func__, __LINE__);
-#endif
 			pthread_cond_wait(&cond_zero, &mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] after cond_zero wait\n", pthread_self(), __func__, __LINE__);
-#endif
 		}
 		pthread_mutex_unlock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex unlock\n", pthread_self(), __func__, __LINE__);
-#endif
 
 		printf("%d\n", 0);
 		pthread_mutex_lock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex lock\n", pthread_self(), __func__, __LINE__);
-#endif
 		flag_zero = 0;
 		count++;
 		if(count %2 == 0)
 		{
 			flag_even = 1;
 			pthread_cond_signal(&cond_even);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] after cond_even signal\n", pthread_self(), __func__, __LINE__);
-#endif
 		}
 		else
 		{
 			flag_odd = 1;
 			pthread_cond_signal(&cond_odd);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] after cond_odd signal\n", pthread_self(), __func__, __LINE__);
-#endif
 		}
 		pthread_mutex_unlock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex unlock\n", pthread_self(), __func__, __LINE__);
-#endif
 		if(count == obj->n)
 			break;
 	}
@@ -159,9 +141,6 @@ void even(ZeroEvenOdd* obj) {
 	while(1)
 	{
 		pthread_mutex_lock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex lock\n", pthread_self(), __func__, __LINE__);
-#endif
 		if((count+2) > obj->n)
 		{
 			pthread_mutex_unlock(&mutex);
@@ -170,34 +149,16 @@ void even(ZeroEvenOdd* obj) {
 
 		while(flag_zero == 1 && flag_even == 0)
 		{
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] before cond_even wait\n", pthread_self(), __func__, __LINE__);
-#endif
 			pthread_cond_wait(&cond_even, &mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] after cond_even wait\n", pthread_self(), __func__, __LINE__);
-#endif
 		}
 		pthread_mutex_unlock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex unlock\n", pthread_self(), __func__, __LINE__);
-#endif
 		printf("%d\n", count);
 
 		pthread_mutex_lock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex lock\n", pthread_self(), __func__, __LINE__);
-#endif
 		flag_zero = 1;
 		flag_even = 0;
 		pthread_cond_signal(&cond_zero);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after cond_zero signal\n", pthread_self(), __func__, __LINE__);
-#endif
 		pthread_mutex_unlock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex unlock\n", pthread_self(), __func__, __LINE__);
-#endif
 		if(count == obj->n)
 			break;
 	}
@@ -216,9 +177,6 @@ void odd(ZeroEvenOdd* obj) {
 	while(1)
 	{
 		pthread_mutex_lock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex lock\n", pthread_self(), __func__, __LINE__);
-#endif
 		if(obj->n >= 2)
 			if((count+2) > obj->n)
 			{
@@ -228,34 +186,16 @@ void odd(ZeroEvenOdd* obj) {
 
 		while(flag_zero == 1 && flag_odd == 0)
 		{
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] before cond_odd wait\n", pthread_self(), __func__, __LINE__);
-#endif
 			pthread_cond_wait(&cond_odd, &mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-			printf("thread: [%ld] function: [%s] line: [%d] after cond_odd wait\n", pthread_self(), __func__, __LINE__);
-#endif
 		}
 		pthread_mutex_unlock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex unlock\n", pthread_self(), __func__, __LINE__);
-#endif
 		printf("%d\n", count);
 
 		pthread_mutex_lock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex lock\n", pthread_self(), __func__, __LINE__);
-#endif
 		flag_zero = 1;
 		flag_odd = 0;
 		pthread_cond_signal(&cond_zero);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after cond_zero signal\n", pthread_self(), __func__, __LINE__);
-#endif
 		pthread_mutex_unlock(&mutex);
-#ifdef _ENABLE_LOGS_THREAD_INFO_
-		printf("thread: [%ld] function: [%s] line: [%d] after mutex unlock\n", pthread_self(), __func__, __LINE__);
-#endif
 		if(count == obj->n)
 			break;
 	}
